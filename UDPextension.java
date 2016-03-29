@@ -3,7 +3,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
+
 
 public class UDPextension extends Thread {
 	private DatagramSocket UDPclientSocket;
@@ -20,6 +20,7 @@ public class UDPextension extends Thread {
       
 	}
 	
+
 	public void kill()
 	{
 		try {
@@ -30,6 +31,7 @@ public class UDPextension extends Thread {
 			DatagramPacket packet=new DatagramPacket(fwe, 3, InetAddress.getByName("127.0.0.1"),port);
 			socket.send(packet);
 			socket.close();
+		
 		} catch (java.lang.Exception e) {}
 	
 		
