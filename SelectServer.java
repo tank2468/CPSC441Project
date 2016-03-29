@@ -10,8 +10,6 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 public class SelectServer {
 	
@@ -75,7 +73,6 @@ public class SelectServer {
         final int PORT=Integer.parseInt(args[0]);
         UDPextension UDPServer=new UDPextension(PORT);
         UDPServer.start();
-        Auth.Init("users.db");
         
         
         // Initialize buffers and coders for channel receive and send
@@ -136,13 +133,7 @@ public class SelectServer {
                 {
                     // Get key from set
                     SelectionKey key = (SelectionKey)readyItor.next();
-                    if (key.attachment()==null)
-                    {
-                    	User user=new User();
-                    	user.auth=new Auth();
-                    	user.log=new LinkedList();
-                    	key.attach(user);
-                    }
+                    if (key.attachment()==null) key.attach(new Auth());
                     // Remove current entry
                     readyItor.remove();
             
@@ -189,11 +180,11 @@ public class SelectServer {
                             cBuffer.flip();
                             line = cBuffer.toString();
                            
-                         if (((User) key.attachment()).auth.ok()==false)  //Checks if there is no user associated with this session
+                         if (((Auth) key.attachment()).ok()==false)  //Checks if there is no user associated with this session
                          {
-                        	User user=((User) key.attachment());
-                        	boolean result=user.auth.send(line);
-                        	key.attach(user);
+                        	Auth auth=((Auth) key.attachment());
+                        	boolean result=auth.send(line);
+                        	key.attach(auth);
                         	if (result) Ok();
                         	else End();
                          }
@@ -202,9 +193,9 @@ public class SelectServer {
                             System.out.println("TCP Client: " + TCPClient.toASCIIString(line));
                         
                         
-                            if (((User) key.attachment()).auth.whoami().equals("bob")) Send("BOB");  //test string when sends BOB when bob is logged in
-                            if (((User) key.attachment()).auth.whoami().equals("user")) Send("user");  //test string when sends BOB when bob is logged in
-                            if (((User) key.attachment()).auth.whoami().equals("Ant")) Send("Anthony");  //test string when sends BOB when bob is logged in
+                            if (((Auth) key.attachment()).whoami().equals("bob")) Send("BOB");  //test string when sends BOB when bob is logged in
+                            if (((Auth) key.attachment()).whoami().equals("user")) Send("user");  //test string when sends BOB when bob is logged in
+                            
                            
                            
                           
@@ -235,20 +226,7 @@ public class SelectServer {
 								End();
 								break;
 							}
-							
-							
-							if(checkStr == true && line.equals("/help\n")){
-								Send("/get\n");
-								Send("/filelist");
-								Send("/listfriend\n");
-								break;
-							
-							}
-							
-							
-							
-							
-							
+								
 								
 								
 							if(checkStr == true && line.equals("/get\n")){
@@ -265,7 +243,7 @@ public class SelectServer {
 							}
 							
 															
-							if(checkStr == true && line.equals("/filelist\n")){
+							if(checkStr == true && line.equals("/list\n")){
 										/*test="";
 										try{
 											for (int i=0; i<4; i++)   
@@ -292,38 +270,6 @@ public class SelectServer {
 									break;
 									
 
-								}
-								
-								
-							if(checkStr == true && line.equals("/viewFriends\n")){
-								
-								
-										String username = (((User) key.attachment()).auth.whoami());
-										String readfriend_db = username + ".db";
-										
-										
-										System.out.println("Reading userfile name");
-										
-										System.out.println(readfriend_db);
-										
-										FileReader friendfile=new FileReader(readfriend_db);
-										BufferedReader b_2 =new BufferedReader(friendfile);
-										
-										
-										String friendLine;
-										while((friendLine = b_2.readLine()) != null)
-										{
-											Send(friendLine);
-										
-										}
-										b_2.close();
-										
-								
-										
-					
-									break;
-									
-							
 								}
 						
 						
