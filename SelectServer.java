@@ -12,6 +12,10 @@ import java.nio.charset.*;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
+import java.io.StringReader;
+
+
 
 public class SelectServer {
 	
@@ -343,25 +347,36 @@ public class SelectServer {
 										//System.out.println(readfriend_db);
 										
 										FileReader friendfile=new FileReader(readfriend_db);
-										BufferedReader b_2 =new BufferedReader(friendfile);
 										
-										
+										BufferedReader b_2 = new BufferedReader(friendfile);
+										PrintWriter writer = new PrintWriter(readfriend_db);
 										
 										
 										//WE HAVE TO WRITE TO THE FILE
 										String friendLine;
+										
 										while((friendLine = b_2.readLine()) != null)
 										{
 											if(delusername == friendLine){
+												
+												friendLine = friendLine.replace(delusername, " ");
+												writer.println(friendLine);
+												
+												break;
+												
+												
+												/*
 												friendLine = friendLine.replace(delusername , "");
+												writer.println(friendLine);
 												System.out.print("ggrergergergerhea");
+												*/
 											
 											}
 											
-											
-											
+										
 										}
 										b_2.close();		
+										writer.close();
 										
 										
 								End();
