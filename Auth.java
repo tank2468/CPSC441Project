@@ -60,7 +60,7 @@ public class Auth {
 		BufferedReader b=new BufferedReader(f);
 		int size=Integer.parseInt(b.readLine());
 		size=size >> 1;
-		//System.out.println(size);
+		System.out.println(size);
 	    users=new String[size];
 	    passwords=new String[size];
 	    int i=0;
