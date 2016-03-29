@@ -10,6 +10,8 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class SelectServer {
 	
@@ -139,7 +141,6 @@ public class SelectServer {
                     	User user=new User();
                     	user.auth=new Auth();
                     	user.log=new LinkedList();
-                    	user.files=new LinkedList();
                     	key.attach(user);
                     }
                     // Remove current entry
@@ -149,10 +150,12 @@ public class SelectServer {
                     if (key.isAcceptable())
                     {
                         
-                        cchannel = ((ServerSocketChannel)key.channel()).accept();
+                         cchannel = ((ServerSocketChannel)key.channel()).accept();
                         cchannel.configureBlocking(false);
                         System.out.println("Accept conncection from " + cchannel.socket().toString());
-
+                    
+                        
+                
                         // Register the new connection for read operation
                         cchannel.register(selector, SelectionKey.OP_READ);
                                   
@@ -171,7 +174,8 @@ public class SelectServer {
                              
                             // Read from socket
                             bytesRecv = cchannel.read(inBuffer);
-
+                            
+                            
                             
                             if (bytesRecv <= 0)
                             {
@@ -190,23 +194,37 @@ public class SelectServer {
                         	User user=((User) key.attachment());
                         	boolean result=user.auth.send(line);
                         	key.attach(user);
-                        	if (result) 
-                        		Ok();
-                        	else 
-                        		End();
+                        	if (result) Ok();
+                        	else End();
                          }
                             
                          else{
                             System.out.println("TCP Client: " + TCPClient.toASCIIString(line));
                         
-                            if (((User) key.attachment()).auth.whoami().equals("bob")) 
-                            	Send("BOB");  //test string when sends BOB when bob is logged in
-                            if (((User) key.attachment()).auth.whoami().equals("user")) 
-                            	Send("user");  //test string when sends BOB when bob is logged in
+                        
+                            if (((User) key.attachment()).auth.whoami().equals("bob")) Send("BOB");  //test string when sends BOB when bob is logged in
+                            if (((User) key.attachment()).auth.whoami().equals("user")) Send("user");  //test string when sends BOB when bob is logged in
+                            if (((User) key.attachment()).auth.whoami().equals("Ant")) Send("Anthony");  //test string when sends BOB when bob is logged in
+                           
+                           
+                          
                             
-                            if (line.equals("terminate\n")||line.equals("terminate\r\n")){
-                            	terminated = true; Send("T$#T(QIGAK");
-                            	}
+                            if (line.equals("terminate\n")||line.equals("terminate\r\n"))
+                            {terminated = true; Send("T$#T(QIGAK");}
+               
+                           
+                            /*
+                            ok=false;
+                            test="";
+                            try{
+								
+                            for (int i=0; i<4; i++)   
+                             	test=test+line.charAt(i);
+                            }  
+                            
+                            catch (java.lang.StringIndexOutOfBoundsException i){}	
+                            
+                            */
                             
                             boolean checkStr = line.contains("/");
 								
@@ -217,54 +235,149 @@ public class SelectServer {
 								End();
 								break;
 							}
-					
+							
+							
+							if(checkStr == true && line.equals("/help\n")){
+								Send("/get\n");
+								Send("/filelist");
+								Send("/listfriend\n");
+								break;
+							
+							}
+							
+							
+							
+							
+							
+								
+								
 							if(checkStr == true && line.equals("/get\n")){
+                            
+									
+									
+									
 										System.out.println("You input was GET"); 
 										Send("You input was GET");
 										End();
 					
 									break;
-							}
 							
-							if(checkStr == true && line.equals("/send\n")){
-								System.out.println("Your input was GET"); 
-								Send("Your input was GET");
-								
-								String fileToSend = "/home/ugb/ooajayi/aHash";
-
-								Send("sendSignal");
-								String[] readFile = util.readFile("fileToSend");
-								if(!(readFile==null))
-								for(int i=0; i<readFile.length; i++){
-									Send(readFile[i]);
-								}
-								End(); //End send transmission
-								
-								Send("File has been sent");	//confirm file sent
-								User user=((User) key.attachment());
-								user.files.append(fileToSend);				//add to user records of file owned
-								
-								key.attach(user);
-								
-								break;
 							}
 							
 															
-							if(checkStr == true && line.equals("/list\n")){
-								
-								User user=((User) key.attachment());
-								String[] fileList = user.files.Traverse();
-								
-								for(int i=0; i<fileList.length; i++){
-									Send(fileList[i]);
-								}
+							if(checkStr == true && line.equals("/filelist\n")){
+										/*test="";
+										try{
+											for (int i=0; i<4; i++)   
+												test=test+line.charAt(i);
+											} catch (java.lang.StringIndexOutOfBoundsException i){}	
+											* 
+											*/
+											
+									// SECOND IF 
+									
+										/* {  File location = new File(".");
+										File[] FilesInFolder=location.listFiles();
+										for (int i=0; i<FilesInFolder.length; i++)
+										{	if (FilesInFolder[i].isFile())
+											out="File " + FilesInFolder[i].getName()+"\n";
+											else out="Directory "+FilesInFolder[i].getName()+"\n";*/
+										
+											for (int i=0;  i<10; i++){
+											Send("Hello World!");
+											}
+                               
+										End();
+									
+									break;
+									
 
+								}
+								
+								
+							if(checkStr == true && line.equals("/viewFriends\n")){
+								
+								
+										String username = (((User) key.attachment()).auth.whoami());
+										String readfriend_db = username + ".db";
+										
+										
+										//System.out.println("Reading userfile name");
+										
+										System.out.println(readfriend_db);
+										
+										FileReader friendfile=new FileReader(readfriend_db);
+										BufferedReader b_2 =new BufferedReader(friendfile);
+										
+										
+										String friendLine;
+										while((friendLine = b_2.readLine()) != null)
+										{
+											Send(friendLine);
+										
+										}
+										b_2.close();
+										
+								
+										
+									End();
+									break;
+									
+									
+							
+								}
+								
+							
+							boolean checkDel = line.contains("/delFriends");
+								
+							if(checkStr == true && checkDel == true){
+								
+										String delusername = line.substring(12);
+										System.out.println(delusername);
+										
+								
+										String username = (((User) key.attachment()).auth.whoami());
+										String readfriend_db = username + ".db";
+										
+										
+										//System.out.println(readfriend_db);
+										
+										FileReader friendfile=new FileReader(readfriend_db);
+										BufferedReader b_2 =new BufferedReader(friendfile);
+										
+										
+										
+										
+										//WE HAVE TO WRITE TO THE FILE
+										String friendLine;
+										while((friendLine = b_2.readLine()) != null)
+										{
+											if(delusername == friendLine){
+												friendLine = friendLine.replace(delusername , "");
+												System.out.print("ggrergergergerhea");
+											
+											}
+											
+											
+											
+										}
+										b_2.close();		
+										
+										
 								End();
 								break;
+								
+										
+								
+								
+									
+									
+							
 							}
+								
+								
+								
 						
-							
-							
 						
 						
 						//INSERT YOUR FUCNTINOS HERE//

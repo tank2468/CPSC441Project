@@ -49,7 +49,6 @@ class TCPClient {
 
     	final String EOM="EWFAKJWGAER";
        final String TERM="T$#T(QIGAK";
-       final String SEND= "sendSignal";
 
        boolean ok=false;
         if (args.length != 2)
@@ -71,7 +70,9 @@ class TCPClient {
     	// Get user input and send to the server
         // Display the echo meesage from the server
         System.out.println("You are connected to the server!");
-        System.out.println("If you do not have account, please enter 'newuser' ");
+        System.out.println("If you do not have account, please enter '/newuser' ");
+        System.out.println("If you want to view all commandlines, please enter '/help' ");
+        
         
        // System.out.print("Enter ID: ");
        // String inputID = inFromUser.readLine(); 
@@ -87,7 +88,7 @@ class TCPClient {
 	
     	        
         // Get user input and send to the server
-        // Display the echo message from the server
+        // Display the echo meesage from the server
     	line=EOM;
         boolean pass=false;
         
@@ -119,38 +120,23 @@ class TCPClient {
          
             while (true){ 
             
-            	if (line.equals(OK)) {
-            		ok=true; 
-            		break;
-            	} //Auth okay.
+             if (line.equals(OK)) {ok=true; break;} //Auth okay.
 			  
-            	line=connexion.readLine();
+			 line=connexion.readLine();
 		
-            	if (line.equals(EOM)||line.equals(TERM)) 
-            		break;
+             if (line.equals(EOM)||line.equals(TERM)) break;
             
-            	out.println(toASCIIString(line));
+             out.println(toASCIIString(line));
+
             }
+         
+			
 			
 			if (line.equals(TERM)) break;
+			
 
-			if (line.equals(SEND)){
-				//String[] file = util.readFile("fileToSend");
-				LinkedList readFile = new LinkedList();
-				while (!(line.equals(EOM))){
-					readFile.append(line);
-				}
-				readFile.Traverse();
-				
-				//iterate thru readFile and write to file with filetoSend
-				
-				
-				
-				System.out.println("File received");	//confirm file sent
-				
-				break;
-			}
-				
+
+
 
 
 		
