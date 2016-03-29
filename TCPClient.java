@@ -11,6 +11,7 @@ import java.net.*;
 
 class TCPClient { 
 	
+	@SuppressWarnings("unused") //set condition to true if you want ascii output
 	public static String toASCIIString(String in)
 	{
 		if (false){
@@ -26,6 +27,7 @@ class TCPClient {
 		return out;} else return in;
 	}
 	
+
 	public static boolean isEmpty(String in)
 	{
 		boolean outcome=false;
@@ -40,81 +42,91 @@ class TCPClient {
 		return false;
 	}
 	
-	public static String StringProcess(String in)
-	{  if (true)
-	{
-	   in.trim();
-	   String theString="";
-	   int j=-1;
-	   for (int i=1;i<in.length();i+=2)
-	   { if (in.charAt(i)=='\n') break; else
-		   theString+=in.charAt(i);}
-	   String out="";
-	   try{
-	   while (theString.charAt(++j)!=(char) 0)
-		   out+=theString.charAt(j);}
-	   catch (java.lang.StringIndexOutOfBoundsException afui){}
-	   
-	      
-	   return out;} else return in;
-	   
-	}
+ public static   final String OK="EAKQRHWEQRGYWEQORIKJMN"; 
 
-    public static void main(String args[]) throws Exception 
-    {  final String EOM="EWFAKJWGAER";
+	public static void main(String args[]) throws Exception 
+    {  
+
+    	final String EOM="EWFAKJWGAER";
        final String TERM="T$#T(QIGAK";
+
+       boolean ok=false;
         if (args.length != 2)
         {
             System.out.println("Usage: TCPClient <Server IP> <Server Port>");
             System.exit(1);
         }
+    	WindowThread out=new WindowThread();
+    	out.setSize(300, 500);
+    	out.run();
+    	TCPConnexion connexion=new TCPConnexion();
+    	connexion.args=args;
+    	connexion.run();
 
-        // Initialize a client socket connection to the server
-        Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1])); 
-
-
-		int clientPort = Integer.parseInt(args[1]); 
-		
-        // Initialize input and an output stream for the connection(s)
-        PrintWriter outBuffer = 
-          new PrintWriter(clientSocket.getOutputStream(), true); 
-          
-        BufferedReader inBuffer = 
-          new BufferedReader(new
-          InputStreamReader(clientSocket.getInputStream())); 
-
-        // Initialize user input stream
-
+    	BufferedReader inFromUser = 
+    	        new BufferedReader(new InputStreamReader(System.in)); 
+    	        String line;
+       
+    	// Get user input and send to the server
+        // Display the echo meesage from the server
+        System.out.println("You are connected to the server!");
+        System.out.println("If you do not have account, please enter '/newuser' ");
+        System.out.println("If you want to view all commandlines, please enter '/help' ");
         
-		String line; 
-        BufferedReader inFromUser = 
-        new BufferedReader(new InputStreamReader(System.in)); 
         
+       // System.out.print("Enter ID: ");
+       // String inputID = inFromUser.readLine(); 
+       // System.out.print("Enter password: ");
+	//String inputpassword = inFromUser.readLine(); 
+        
+        //System.out.println("Testing to print inputID from the user : " + inputID);
+        //System.out.println("Testing to print inputpwd from the user : " + inputpassword);
+        
+        //line = inFromUser.readLine();         
+
+
+	
+    	        
         // Get user input and send to the server
         // Display the echo meesage from the server
-        System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-        line = inFromUser.readLine(); 
+    	line=EOM;
+        boolean pass=false;
         
         
         while (!line.equals("logout"))
         {
-            // Send to the server
-            outBuffer.println(line); 
+            if (ok) 
+            System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
+            else{if (pass)
+            	System.out.print("Password=");
+            else
+            	System.out.print("Username=");
+            }
+            line = inFromUser.readLine();
+            if (!ok){
+            if (pass)
+            	pass=false;
+            else pass=true;
+            }
             
+            // Send to the server
+            connexion.println(line); 
+            
+          
             
          
             // Getting response from the server
             
          
-            while (923==923){ 
-             
-			 line = inBuffer.readLine(); 
-			 line.trim();
-		     line=StringProcess(line);
+            while (true){ 
+            
+             if (line.equals(OK)) {ok=true; break;} //Auth okay.
+			  
+			 line=connexion.readLine();
 		
              if (line.equals(EOM)||line.equals(TERM)) break;
             
-             System.out.println(toASCIIString(line));
+             out.println(toASCIIString(line));
 
             }
          
@@ -122,9 +134,6 @@ class TCPClient {
 			
 			if (line.equals(TERM)) break;
 			
-             
-            System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-            line = inFromUser.readLine();
 
 
 
@@ -135,60 +144,13 @@ class TCPClient {
         
         // Close the socket
         System.out.println("You are now disconnect from the server");
-
-        clientSocket.close(); }          
+        out.kill();
+        connexion.close();
+	System.exit(0); }          
     
     
-    public static boolean checkList(String aFile){
-		File location = new File("/home/ugd/ascho/Desktop/assignment1");
-        File[] FilesInFolder = location.listFiles();
-                
-		boolean fileHere = false;
-		
-		for (File fileReq: FilesInFolder){
-			if (fileReq.getName().equals(aFile))
-						fileHere = true;
-		}
-		return fileHere;
-	}
-    
-    public static void readFile(String file, int clientPort, long len){
-    	BufferedReader br = null;
-    	BufferedWriter bw = null;
-    	
-    	String newFile = file + "-" +clientPort;
-    	
-    	
-    	
-        try{	
-            br = new BufferedReader(new FileReader(file));
-            bw = new BufferedWriter(new FileWriter(newFile));	
-            	
-            String line = br.readLine();
-            
-            
-            while (line != null) {
-				bw.write(line);
-            	System.out.println(line);
-            	
-            	bw.newLine();
-            	
-            	line = br.readLine();
-            }
-            
-			System.out.println("File saved in " + file + "-" + clientPort + " (" + len + " bytes)");
-            
- 	    }catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-				try {
-					br.close();
-					bw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-        }
+  
+        
     }
     
-} 
+ 

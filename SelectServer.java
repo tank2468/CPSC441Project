@@ -10,6 +10,8 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class SelectServer {
 	
@@ -27,6 +29,13 @@ public class SelectServer {
 		{
 			Send("EWFAKJWGAER");
 		}
+		
+		private static void Ok()
+		{
+			Send(Auth.OK);
+		}
+		
+
 		
 		private static void Send(String in)
 		{   in+=(char)10;
@@ -53,6 +62,7 @@ public class SelectServer {
 		}
 		private static  SocketChannel cchannel;
     public static int BUFFERSIZE = 1500;
+
 	@SuppressWarnings("deprecation")
 	public static void main(String args[]) throws Exception 
     {
@@ -61,9 +71,11 @@ public class SelectServer {
             System.out.println("Usage: SelectServer <Listening Port>");
             System.exit(1);
         }
+        
         final int PORT=Integer.parseInt(args[0]);
         UDPextension UDPServer=new UDPextension(PORT);
         UDPServer.start();
+        Auth.Init("users.db");
         
         
         // Initialize buffers and coders for channel receive and send
@@ -110,8 +122,8 @@ public class SelectServer {
                 // Get set of ready sockets
                 Set readyKeys = selector.selectedKeys();
                 Iterator readyItor = readyKeys.iterator();
-                final String GET="get ";
-                final String LIST="list";
+              //  final String GET="get ";
+              //  final String LIST="list";
                 final String UNKNOWN="Unknown Command: ";
                 
                 String out="";
@@ -124,10 +136,16 @@ public class SelectServer {
                 {
                     // Get key from set
                     SelectionKey key = (SelectionKey)readyItor.next();
-
+                    if (key.attachment()==null)
+                    {
+                    	User user=new User();
+                    	user.auth=new Auth();
+                    	user.log=new LinkedList();
+                    	key.attach(user);
+                    }
                     // Remove current entry
                     readyItor.remove();
-
+            
                     // Accept new connections, if any
                     if (key.isAcceptable())
                     {
@@ -135,15 +153,19 @@ public class SelectServer {
                          cchannel = ((ServerSocketChannel)key.channel()).accept();
                         cchannel.configureBlocking(false);
                         System.out.println("Accept conncection from " + cchannel.socket().toString());
+                    
                         
+                
                         // Register the new connection for read operation
                         cchannel.register(selector, SelectionKey.OP_READ);
+                                  
                     } 
                     else 
                     {
-                        SocketChannel cchannel = (SocketChannel)key.channel();
+                        cchannel = (SocketChannel)key.channel();
                         if (key.isReadable())
                         {
+     
                             Socket socket = cchannel.socket();
                         
                             // Open input and output streams
@@ -166,65 +188,175 @@ public class SelectServer {
                             decoder.decode(inBuffer, cBuffer, false);
                             cBuffer.flip();
                             line = cBuffer.toString();
+                           
+                         if (((User) key.attachment()).auth.ok()==false)  //Checks if there is no user associated with this session
+                         {
+                        	User user=((User) key.attachment());
+                        	boolean result=user.auth.send(line);
+                        	key.attach(user);
+                        	if (result) Ok();
+                        	else End();
+                         }
                             
-                         
-                            
-                            
+                         else{
                             System.out.println("TCP Client: " + TCPClient.toASCIIString(line));
-                            
-                            
-                            
-                            
-                             //Thread.sleep(500L); //Delay for 0.5 second
-
+                        
+                        
+                            if (((User) key.attachment()).auth.whoami().equals("bob")) Send("BOB");  //test string when sends BOB when bob is logged in
+                            if (((User) key.attachment()).auth.whoami().equals("user")) Send("user");  //test string when sends BOB when bob is logged in
+                            if (((User) key.attachment()).auth.whoami().equals("Ant")) Send("Anthony");  //test string when sends BOB when bob is logged in
+                           
+                           
                           
                             
                             if (line.equals("terminate\n")||line.equals("terminate\r\n"))
                             {terminated = true; Send("T$#T(QIGAK");}
                
                            
+                            /*
                             ok=false;
                             test="";
                             try{
+								
                             for (int i=0; i<4; i++)   
                              	test=test+line.charAt(i);
-                            } catch (java.lang.StringIndexOutOfBoundsException i){}	
-                            if (test.equalsIgnoreCase(GET))
-                            	{System.out.println(GET); ok=true; }
-                           
-                            if (ok==false){
-                            test="";
-                            try{
-                                for (int i=0; i<4; i++)   
-                                 	test=test+line.charAt(i);
-                                } catch (java.lang.StringIndexOutOfBoundsException i){}	
-                                if (test.equalsIgnoreCase(LIST))
-                                 /* {  File location = new File(".");
-                                File[] FilesInFolder=location.listFiles();
-                                for (int i=0; i<FilesInFolder.length; i++)
-                                {	if (FilesInFolder[i].isFile())
-                                	out="File " + FilesInFolder[i].getName()+"\n";
-                                	else out="Directory "+FilesInFolder[i].getName()+"\n";*/
-                                { for (int i=0;  i<10; i++)
-                                {
-                                	Send("Hello World!");
-                                }
+                            }  
+                            
+                            catch (java.lang.StringIndexOutOfBoundsException i){}	
+                            
+                            */
+                            
+                            boolean checkStr = line.contains("/");
+								
+                            
+							if(checkStr == false)
+							{
+								Send(line);
+								End();
+								break;
+							}
+							
+							
+							if(checkStr == true && line.equals("/help\n")){
+								Send("/get\n");
+								Send("/filelist");
+								Send("/listfriend\n");
+								break;
+							
+							}
+							
+							
+							
+							
+							
+								
+								
+							if(checkStr == true && line.equals("/get\n")){
+                            
+									
+									
+									
+										System.out.println("You input was GET"); 
+										Send("You input was GET");
+										End();
+					
+									break;
+							
+							}
+							
+															
+							if(checkStr == true && line.equals("/filelist\n")){
+										/*test="";
+										try{
+											for (int i=0; i<4; i++)   
+												test=test+line.charAt(i);
+											} catch (java.lang.StringIndexOutOfBoundsException i){}	
+											* 
+											*/
+											
+									// SECOND IF 
+									
+										/* {  File location = new File(".");
+										File[] FilesInFolder=location.listFiles();
+										for (int i=0; i<FilesInFolder.length; i++)
+										{	if (FilesInFolder[i].isFile())
+											out="File " + FilesInFolder[i].getName()+"\n";
+											else out="Directory "+FilesInFolder[i].getName()+"\n";*/
+										
+											for (int i=0;  i<10; i++){
+											Send("Hello World!");
+											}
                                
-                                End();
-                                ok=true;}
-                                	
-                                	
-                                if (ok==false){
-                              Send(UNKNOWN+line); 
-                              End();
-                                }
-                              
-                           
+										End();
+									
+									break;
+									
+
+								}
+								
+								
+							if(checkStr == true && line.equals("/viewFriends\n")){
+								
+								
+										String username = (((User) key.attachment()).auth.whoami());
+										String readfriend_db = username + ".db";
+										
+										
+										System.out.println("Reading userfile name");
+										
+										System.out.println(readfriend_db);
+										
+										FileReader friendfile=new FileReader(readfriend_db);
+										BufferedReader b_2 =new BufferedReader(friendfile);
+										
+										
+										String friendLine;
+										while((friendLine = b_2.readLine()) != null)
+										{
+											Send(friendLine);
+										
+										}
+										b_2.close();
+										
+								
+										
+					
+									break;
+									
+							
+								}
+						
+						
+						
+						//INSERT YOUR FUCNTINOS HERE//
+						
+						
+						
+						
+								else{
+									Send(UNKNOWN+line); 
+									End();
+									break;
+									/*if (checkStr == true){
+										Send(UNKNOWN+line); 
+										End();
+									}
+									
+									else{
+				
+									Send(line);
+									End();
+								}*/
+								
+								}
+							}//end of else case
+						
+						
                          }
                     }
                 } // end of while (readyItor.hasNext()) 
             } // end of while (!terminated)
-        }}
+        }
         catch (IOException e) {
             System.out.println(e);
         }
@@ -245,7 +377,7 @@ public class SelectServer {
                 ((SocketChannel)key.channel()).socket().close();
 
         }
-	UDPServer.stop();
+    UDPServer.stop();
 	UDPServer.kill();
 
       
