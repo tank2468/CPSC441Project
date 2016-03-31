@@ -12,22 +12,7 @@ import java.net.*;
 class TCPClient { 
 	
 	@SuppressWarnings("unused") //set condition to true if you want ascii output
-	public static String toASCIIString(String in)
-	{
-		if (false){
-		int size=in.length();
-		int temp;
-		String out="";
-		for (int i=0; i<size; i++)
-		{
-			temp=(int) in.charAt(i);
-			out+=Integer.toString(temp);
-			out+=" ";
-		}
-		return out;} else return in;
-	}
 	
-
 	public static boolean isEmpty(String in)
 	{
 		boolean outcome=false;
@@ -42,16 +27,17 @@ class TCPClient {
 		return false;
 	}
 	
+   public static final String EOM="EWFAKJWGAER";
+   public static final String TERM="T$#T(QIGAK";
+	
  public static   final String OK="EAKQRHWEQRGYWEQORIKJMN"; 
 
 	public static void main(String args[]) throws Exception 
     {  
 
-    	final String EOM="EWFAKJWGAER";
-       final String TERM="T$#T(QIGAK";
-       final String SEND= "sendSignal";
 
-       boolean ok=false;
+
+       
         if (args.length != 2)
         {
             System.out.println("Usage: TCPClient <Server IP> <Server Port>");
@@ -59,105 +45,86 @@ class TCPClient {
         }
     	WindowThread out=new WindowThread();
     	out.setSize(300, 500);
-    	out.run();
+    	
+    	
     	TCPConnexion connexion=new TCPConnexion();
     	connexion.args=args;
     	connexion.run();
+    	out.link(connexion);
+    	out.run();
 
     	BufferedReader inFromUser = 
     	        new BufferedReader(new InputStreamReader(System.in)); 
     	        String line;
+    	
        
     	// Get user input and send to the server
         // Display the echo meesage from the server
-        System.out.println("You are connected to the server!");
-        System.out.println("If you do not have account, please enter 'newuser' ");
+       // System.out.println("You are connected to the server!");
+      //  System.out.println("If you do not have account, please enter 'newuser' ");
         
-       // System.out.print("Enter ID: ");
-       // String inputID = inFromUser.readLine(); 
-       // System.out.print("Enter password: ");
-	//String inputpassword = inFromUser.readLine(); 
-        
-        //System.out.println("Testing to print inputID from the user : " + inputID);
-        //System.out.println("Testing to print inputpwd from the user : " + inputpassword);
-        
-        //line = inFromUser.readLine();         
-
 
 	
     	        
         // Get user input and send to the server
-        // Display the echo message from the server
+        // Display the echo meesage from the server
     	line=EOM;
-        boolean pass=false;
         
+    	clientAuthWindow A=new clientAuthWindow();
         
         while (!line.equals("logout"))
         {
-            if (ok) 
-            System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-            else{if (pass)
-            	System.out.print("Password=");
+            if (clientAuthData.ok);  // {  System.out.print("Please enter a message to be sent to the server ('logout' to terminate): "); }
             else
-            	System.out.print("Username=");
+            {
+            	while (!clientAuthData.ok)
+            	{
+            	while(!A.ready) Thread.sleep(500);
+            	connexion.println(clientAuthData.user);
+            	connexion.readLine();
+            	connexion.println(clientAuthData.pass);
+            	if (connexion.readLine().equals(OK)){ clientAuthData.ok=true; out.start();}
+            	A.updateVisibility();
+            	}
+            	
             }
-            line = inFromUser.readLine();
-            if (!ok){
-            if (pass)
-            	pass=false;
-            else pass=true;
-            }
+         
             
-            // Send to the server
-            connexion.println(line); 
-            
-          
+        
+        
+ 
+         
+           while (!connexion.ready())Thread.sleep(500);
             
          
             // Getting response from the server
             
          
             while (true){ 
-            
-            	if (line.equals(OK)) {
-            		ok=true; 
-            		break;
-            	} //Auth okay.
-			  
             	line=connexion.readLine();
+            // if (line.equals(OK)) {ok=true; break;} //Auth okay.
+			  
+			 
 		
-            	if (line.equals(EOM)||line.equals(TERM)) 
-            		break;
-            
-            	out.println(toASCIIString(line));
+             if (line.equals(EOM)||line.equals(TERM)) break;
+            // System.out.println(line);
+             out.println(line);
             }
+         
+			
 			
 			if (line.equals(TERM)) break;
+			
 
-			if (line.equals(SEND)){
-				//String[] file = util.readFile("fileToSend");
-				LinkedList readFile = new LinkedList();
-				while (!(line.equals(EOM))){
-					readFile.append(line);
-				}
-				readFile.Traverse();
-				
-				//iterate thru readFile and write to file with filetoSend
-				
-				
-				
-				System.out.println("File received");	//confirm file sent
-				
-				break;
-			}
-				
+
+
 
 
 		
         } //End of the while loop
         
         // Close the socket
-        System.out.println("You are now disconnect from the server");
+      //  System.out.println("You are now disconnect from the server");
         out.kill();
         connexion.close();
 	System.exit(0); }          

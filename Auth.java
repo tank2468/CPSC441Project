@@ -1,9 +1,20 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.nio.channels.SelectionKey;
 
-// user authentication system
-// TODO: create file for user/password database
 public class Auth {
+
+	private static SelectionKey[] keys;
+	
+	public static SelectionKey getKey(String username) throws NullPointerException
+	{
+		for (int i=0; i<MAX; i++)
+			if (((User) keys[i].attachment()).auth.whoami().equals(username)) return keys[i];
+		return null;
+	}
+	
+	
+   private static int MAX;
 
 	//server message that user is authenticated
 	public static final String OK="EAKQRHWEQRGYWEQORIKJMN"; 
@@ -19,24 +30,39 @@ public class Auth {
 	private boolean ok=false; //authentication state
 	
 	//removes newline characters Linux and Windows compatible
-	public static String rmLine(String in)
-	{
-		try{
-		in=in.split("\n")[0];
-		return in.split("\r")[0];}
-		catch (java.lang.ArrayIndexOutOfBoundsException fiw) {return "";}
-	}
+	
 	
     public static String[] getLoggedIn()
     {
     	return loggedin.Traverse();
     }
     
+    private static void tk()
+    {
+    	for (int i=0; i<MAX; i++)
+    		{if (keys[i]==null) System.out.println("null");
+    		else System.out.println(((User) keys[i].attachment()).auth.whoami());}
+    }
+    
+    public static void register(SelectionKey key)
+    {
+    	//System.out.println(key.toString());
+    	for(int i=0; i<MAX; i++)
+    		if (keys[i]==null) {keys[i]= key; break;}
+    	tk();
+    }
+    
     public static void logout(String user)
     {
     	loggedin.remove(user);
+    	for (int i=0; i<MAX; i++)
+    		{ if (keys[i]!=null)
+    		if (((User) keys[i].attachment()).auth.whoami().equals(user)) keys[i]=null;
+    		}
     }
 	
+ 
+    
 	public Auth() // hardcoded identities until file db is implemented
 	{
 	/*
@@ -47,7 +73,7 @@ public class Auth {
 		users[1]="user";
 		passwords[1]="password";
 */
-		loggedin=new LinkedList();
+		
 	}
 
 	public static void Init(String filename)
@@ -55,21 +81,24 @@ public class Auth {
 		/* Initialise user database. first line of file is line count
 		 * username and password on separate lines thereafter
 		 */
+		loggedin=new LinkedList();
 	try {
 		FileReader f=new FileReader(filename);
 		BufferedReader b=new BufferedReader(f);
-		int size=Integer.parseInt(b.readLine());
-		size=size >> 1;
-		System.out.println(size);
-	    users=new String[size];
-	    passwords=new String[size];
+		 MAX=Integer.parseInt(b.readLine());
+		MAX=MAX >> 1;
+		System.out.println(MAX);
+	    users=new String[MAX];
+	    passwords=new String[MAX];
 	    int i=0;
-	    while (i<size)
+	    while (i<MAX)
 	    {
 	    	users[i]=b.readLine();
 	    	passwords[i++]=b.readLine();
 	    	
 	    }
+	    b.close();
+	    keys=new SelectionKey[MAX];
 	} catch (java.lang.Exception k)
 	{
 		System.out.println("Error reading credentials from database");
@@ -91,7 +120,7 @@ public class Auth {
 	//receives a string from select server a candidate username or password depending on parity.
 	public Boolean send(String in)
 	{
-		in=rmLine(in);
+		in=util.rmLine(in);
 		if (pass==false)
 		{
 			pass=true;

@@ -32,6 +32,25 @@ public class SelectServer {
 		{
 			Send(Auth.OK);
 		}
+	
+		
+		private static void transmit(String[] data, String username)
+		{
+			try{
+			SelectionKey f=Auth.getKey(username);
+		   SocketChannel fchannel=(SocketChannel)f.channel();
+			
+		   SocketChannel dchannel=cchannel;
+		   cchannel=fchannel;
+		   for (int i=0; i<data.length; i++)
+			   {Send(data[i]); ((User) f.attachment()).log.append(data[i]);}
+		   End();
+		   cchannel=dchannel;
+		   End();
+		} catch (java.lang.NullPointerException d) { Send("Error: user offline"); End();}
+	
+		}
+		
 		
 
 		
@@ -139,7 +158,6 @@ public class SelectServer {
                     	User user=new User();
                     	user.auth=new Auth();
                     	user.log=new LinkedList();
-                    	user.files=new LinkedList();
                     	key.attach(user);
                     }
                     // Remove current entry
@@ -149,10 +167,12 @@ public class SelectServer {
                     if (key.isAcceptable())
                     {
                         
-                        cchannel = ((ServerSocketChannel)key.channel()).accept();
+                         cchannel = ((ServerSocketChannel)key.channel()).accept();
                         cchannel.configureBlocking(false);
                         System.out.println("Accept conncection from " + cchannel.socket().toString());
-
+                    
+                        
+                
                         // Register the new connection for read operation
                         cchannel.register(selector, SelectionKey.OP_READ);
                                   
@@ -171,7 +191,8 @@ public class SelectServer {
                              
                             // Read from socket
                             bytesRecv = cchannel.read(inBuffer);
-
+                            
+                            
                             
                             if (bytesRecv <= 0)
                             {
@@ -190,92 +211,147 @@ public class SelectServer {
                         	User user=((User) key.attachment());
                         	boolean result=user.auth.send(line);
                         	key.attach(user);
-                        	if (result) 
-                        		Ok();
-                        	else 
-                        		End();
+                        	if (result) {Ok(); Auth.register(key);}
+                        	else End();
                          }
                             
                          else{
-                            System.out.println("TCP Client: " + TCPClient.toASCIIString(line));
+                            System.out.println("TCP Client: " + line);
                         
-                            if (((User) key.attachment()).auth.whoami().equals("bob")) 
-                            	Send("BOB");  //test string when sends BOB when bob is logged in
-                            if (((User) key.attachment()).auth.whoami().equals("user")) 
-                            	Send("user");  //test string when sends BOB when bob is logged in
+                        Send (((User) key.attachment()).auth.whoami());
+                           
+                           
+                          
                             
-                            if (line.equals("terminate\n")||line.equals("terminate\r\n")){
-                            	terminated = true; Send("T$#T(QIGAK");
-                            	}
+                            if (line.equals("terminate\n")||line.equals("terminate\r\n"))
+                            {terminated = true; Send("T$#T(QIGAK");}
+               
+                           
+                            /*
+                            ok=false;
+                            test="";
+                            try{
+								
+                            for (int i=0; i<4; i++)   
+                             	test=test+line.charAt(i);
+                            }  
                             
-                            boolean checkStr = line.contains("/");
+                            catch (java.lang.StringIndexOutOfBoundsException i){}	
+                            
+                            */
+                            
+                            
+                            
+                            boolean checkStr = (line.charAt(0)=='/');
 								
                             
 							if(checkStr == false)
 							{
 								Send(line);
+								((User) key.attachment()).log.append(line);
 								End();
 								break;
 							}
-					
-							if(checkStr == true && line.equals("/get\n")){
+							else line=util.rmLine(line);
+								
+							if (checkStr == true && line.contains("/t "))
+							{
+								try {
+								String[] t=new String[2];
+								t[0]="From: "+((User) key.attachment()).auth.whoami();
+								t[1]="";
+								String[] msg=line.split(" ");
+								System.out.println(msg.length);
+								for (int i=2; i< msg.length; i++)
+									t[1]+=msg[i];
+								transmit(t, msg[1]);
+								String to="To ";
+								to+=msg[1]+":";
+								((User) key.attachment()).log.append(to);
+								((User) key.attachment()).log.append(t[1]);
+								Send(to);
+								Send(t[1]);
+								End();
+								} catch (java.lang.ArrayIndexOutOfBoundsException i)
+								{
+									Send("Invalid parameters  USAGE: /t usermane message");
+									End();
+								}
+								break;
+							}
+								
+							if(checkStr == true && line.equals("/get")){
+                            
+									
+									
+									
 										System.out.println("You input was GET"); 
 										Send("You input was GET");
 										End();
 					
 									break;
+							
 							}
 							
-							if(checkStr == true && line.equals("/send\n")){
-								System.out.println("Your input was GET"); 
-								Send("Your input was GET");
-								
-								String fileToSend = "/home/ugb/ooajayi/aHash";
-
-								Send("sendSignal");
-								String[] readFile = util.readFile("fileToSend");
-								if(!(readFile==null))
-								for(int i=0; i<readFile.length; i++){
-									Send(readFile[i]);
-								}
-								End(); //End send transmission
-								
-								Send("File has been sent");	//confirm file sent
-								User user=((User) key.attachment());
-								user.files.append(fileToSend);				//add to user records of file owned
-								
-								key.attach(user);
-								
-								break;
+										
+							if (checkStr == true && line.equals("/loggedin"))
+							{
+								String[] loggedin=Auth.getLoggedIn();
+								Send("Loggedin Users:");
+								for (int i=0; i<loggedin.length; i++)
+									Send(loggedin[i]);
+								End(); break;
 							}
 							
-															
-							if(checkStr == true && line.equals("/list\n")){
-								
-								User user=((User) key.attachment());
-								String[] fileList = user.files.Traverse();
-								
-								for(int i=0; i<fileList.length; i++){
-									Send(fileList[i]);
-								}
-
-								End();
-								break;
+							if (checkStr == true && line.equals("/logout"))
+							{
+								Auth.logout(((User) key.attachment()).auth.whoami());
+								Send("T$#T(QIGAK"); break;
 							}
+							if(checkStr ==true && line.equals("/log"))
+							{
+								String[] log=((User) key.attachment()).log.Traverse();
+								Send("Chat Log:");
+								for (int i=0; i<log.length; i++)
+									Send(log[i]);
+								End(); break;
+							}
+							if(checkStr == true && line.equals("/list")){
+										/*test="";
+										try{
+											for (int i=0; i<4; i++)   
+												test=test+line.charAt(i);
+											} catch (java.lang.StringIndexOutOfBoundsException i){}	
+											* 
+											*/
+											
+									// SECOND IF 
+									
+										/* {  File location = new File(".");
+										File[] FilesInFolder=location.listFiles();
+										for (int i=0; i<FilesInFolder.length; i++)
+										{	if (FilesInFolder[i].isFile())
+											out="File " + FilesInFolder[i].getName()+"\n";
+											else out="Directory "+FilesInFolder[i].getName()+"\n";*/
+										
+											for (int i=0;  i<10; i++){
+											Send("Hello World!");
+											}
+                               
+										End();
+									
+	
 						
-							
-							
 						
 						
 						//INSERT YOUR FUCNTINOS HERE//
+										break;
+										
+
+											}
 						
 						
 						
-						
-								else{
-									Send(UNKNOWN+line); 
-									End();
-									break;
 									/*if (checkStr == true){
 										Send(UNKNOWN+line); 
 										End();
@@ -287,7 +363,7 @@ public class SelectServer {
 									End();
 								}*/
 								
-								}
+							
 							}//end of else case
 						
 						

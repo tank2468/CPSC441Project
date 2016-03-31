@@ -33,8 +33,15 @@ public class TCPConnexion extends Thread{
         
 	} catch (java.lang.Exception e){e.printStackTrace();}
 
-		
+
 }
+	public boolean ready()
+	{
+		try {
+			return inBuffer.ready();
+		} catch (IOException e) {return false;}
+	}
+	
 	public String readLine()
 	{
 		try {

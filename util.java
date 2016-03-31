@@ -2,6 +2,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 
 public class util {
+	
+
+	
 	public static String rmLine(String in)
 	{
 		try{
@@ -27,7 +30,7 @@ public class util {
 	
 	public static String[] readFile(String filename)
 	{
-		/* Initialize user database. first line of file is line count
+		/* Initialise user database. first line of file is line count
 		 * username and password on separate lines thereafter
 		 */
 		LinkedList g=new LinkedList();
