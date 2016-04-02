@@ -43,6 +43,12 @@ public class LinkedList {
 		size++;
 	}
 
+	public void append(String[] in)
+	{
+		for (int i=0; i<in.length; i++)
+			append(in[i]);
+	}
+	
 	public void remove(String arg0)
 	{
 	  if (size==0) return;
@@ -52,9 +58,9 @@ public class LinkedList {
 	  LLNode prev=head;
 	  for(int i=0; i<size;i++)
 		  if (pos.data.equals(arg0)) 
-		  { if (pos.next==null) prev.next=null; tail=prev;}
+	 { if (pos.next==null) {prev.next=null; tail=prev;}
 		  else prev.next=pos.next; 
-	  size--; return;
+	  size--;}
 	  }
 }
 

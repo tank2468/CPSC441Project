@@ -57,7 +57,9 @@ public class Auth {
     	loggedin.remove(user);
     	for (int i=0; i<MAX; i++)
     		{ if (keys[i]!=null)
-    		if (((User) keys[i].attachment()).auth.whoami().equals(user)) keys[i]=null;
+    		if (((User) keys[i].attachment()).auth.whoami().equals(user))
+    		{ ((User) keys[i].attachment()).writeLog();
+    				keys[i]=null;}
     		}
     }
 	

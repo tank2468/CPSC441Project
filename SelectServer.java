@@ -46,8 +46,8 @@ public class SelectServer {
 			   {Send(data[i]); ((User) f.attachment()).log.append(data[i]);}
 		   End();
 		   cchannel=dchannel;
-		   End();
-		} catch (java.lang.NullPointerException d) { Send("Error: user offline"); End();}
+		   
+		} catch (java.lang.NullPointerException d) { Send("Error user offline: " + username); End();}
 	
 		}
 		
@@ -77,6 +77,186 @@ public class SelectServer {
 		}
         
 		}
+		
+		private static void removeLineFromFile(String file, String lineToRemove) {
+ 
+    try {
+ 
+      File inFile = new File(file);
+      
+      if (!inFile.isFile()) {
+        System.out.println("Parameter is not an existing file");
+        
+        return;
+      }
+       
+      //Construct the new file that will later be renamed to the original filename. 
+      File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
+      
+      BufferedReader br = new BufferedReader(new FileReader(file));
+      PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
+      
+      String line = null;
+ 
+      //Read from the original file and write to the new 
+      //unless content matches data to be removed.
+      
+							
+      int friendcheckcounter = 0;
+      
+      while ((line = br.readLine()) != null) {
+        
+        if (!line.trim().equals(lineToRemove)) {
+			
+          pw.println(line);
+          pw.flush();
+          
+         
+        }
+        else{
+			friendcheckcounter++;
+			Send("delete successful");
+		//	End();
+		}
+        
+      }
+      
+      while(friendcheckcounter < 1){
+		  Send("no Friends");
+		  break;
+		 
+		
+	  }
+	  
+      
+      pw.close();
+      br.close();
+      
+      //Delete the original file
+      if (!inFile.delete()) {
+        System.out.println("Could not delete file");
+        return;
+      } 
+      
+      //Rename the new file to the filename the original file had.
+      if (!tempFile.renameTo(inFile))
+        System.out.println("Could not rename file");
+      
+    }
+    catch (FileNotFoundException ex) {
+      ex.printStackTrace();
+    }
+    catch (IOException ex) {
+      ex.printStackTrace();
+    }
+  }
+  
+  
+  
+  private static void duplicateCheckForAdd(String file, String lineToRemove) {
+ 
+		try {
+ 
+		  File inFile = new File(file);
+		  
+		  if (!inFile.isFile()) {
+			System.out.println("Parameter is not an existing file");
+			
+			return;
+		  }
+		   
+		  //Construct the new file that will later be renamed to the original filename. 
+		  File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
+		  
+		  BufferedReader br = new BufferedReader(new FileReader(file));
+		  PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
+		  
+		  String line = null;
+	 
+		  //Read from the original file and write to the new 
+		  //unless content matches data to be removed.
+		  
+								
+		  int friendcheckcounter = 0;
+		  
+		  while ((line = br.readLine()) != null) {
+			
+			if (!line.trim().equals(lineToRemove)) {
+				
+			  pw.println(line);
+			  pw.flush();
+			  
+			 
+			}
+			else{
+				friendcheckcounter++;
+				Send("You already added request user!");
+			//	End();
+			}
+			
+		  }
+		  String filename1 = file;
+		  String adduserName = lineToRemove;
+		  
+		  while(friendcheckcounter == 0){
+			  addFriend(filename1, lineToRemove);
+			  Send("You added succesfully");
+			  break;
+			 
+			
+		  }
+	  
+      
+		 pw.close();
+		  br.close();
+		  /*
+		  //Delete the original file
+		  if (!inFile.delete()) {
+			System.out.println("Could not delete file");
+			return;
+		  } 
+		  
+		  //Rename the new file to the filename the original file had.
+		  if (!tempFile.renameTo(inFile))
+			System.out.println("Could not rename file");
+		  */
+		}
+		catch (FileNotFoundException ex) {
+		  ex.printStackTrace();
+		}
+		catch (IOException ex) {
+		  ex.printStackTrace();
+		}
+	  }	
+	
+  
+  
+  private static void addFriend(String file, String lineToAdd) {
+
+		
+      try{
+			String filename= file;
+			FileWriter fw = new FileWriter(filename,true); //the true will append the new data
+			fw.write(lineToAdd+"\n");//appends the string to the file
+			fw.close();
+		}
+	catch(IOException ioe){
+			System.err.println("IOException: " + ioe.getMessage());
+		}
+	  }	
+		
+  
+  
+  
+  
+  
+  
+		
+		
+		
+		
+		
+		
 		private static  SocketChannel cchannel;
     public static int BUFFERSIZE = 1500;
 
@@ -211,15 +391,14 @@ public class SelectServer {
                         	User user=((User) key.attachment());
                         	boolean result=user.auth.send(line);
                         	key.attach(user);
-                        	if (result) {Ok(); Auth.register(key);}
+                        	if (result) {Ok(); Auth.register(key); user.readLog(); user.recipients=new LinkedList();}
                         	else End();
                          }
                             
                          else{
                             System.out.println("TCP Client: " + line);
                         
-                        Send (((User) key.attachment()).auth.whoami());
-                           
+                                               
                            
                           
                             
@@ -247,38 +426,61 @@ public class SelectServer {
                             
 							if(checkStr == false)
 							{
+								User user=((User) key.attachment());
 								Send(line);
-								((User) key.attachment()).log.append(line);
+								String[] t=new String[2];
+								t[0]="From: "+((User) key.attachment()).auth.whoami();
+								t[1]=line;
+								String[] to=user.recipients.Traverse();
+								for (int i=0;i <to.length; i++)
+									transmit(t,to[i]);
+								user.log.append(line);
 								End();
 								break;
 							}
 							else line=util.rmLine(line);
 								
-							if (checkStr == true && line.contains("/t "))
-							{
-								try {
-								String[] t=new String[2];
-								t[0]="From: "+((User) key.attachment()).auth.whoami();
-								t[1]="";
-								String[] msg=line.split(" ");
-								System.out.println(msg.length);
-								for (int i=2; i< msg.length; i++)
-									t[1]+=msg[i];
-								transmit(t, msg[1]);
-								String to="To ";
-								to+=msg[1]+":";
-								((User) key.attachment()).log.append(to);
-								((User) key.attachment()).log.append(t[1]);
-								Send(to);
-								Send(t[1]);
-								End();
-								} catch (java.lang.ArrayIndexOutOfBoundsException i)
-								{
-									Send("Invalid parameters  USAGE: /t usermane message");
-									End();
-								}
+					        if(checkStr ==true && line.contains("/add "))
+					        {
+					        	String[] users=line.split(" ");
+					        	for (int i=1; i<users.length; i++)
+					        	((User) key.attachment()).recipients.append(users[i]);
+					        	End();
+					        	break;
+					        						        	
+					        }
+					        if (checkStr == true && line.contains("/remove "))
+					        {
+					        	String[] users=line.split(" ");
+					        	for (int i=1; i<users.length; i++)
+					        	((User) key.attachment()).recipients.remove(users[i]);
+					        	End();
+					        	break;
+					        }
+					        
+					        if (checkStr == true && line.equals("/to"))
+					        {
+					        	String[] to=((User) key.attachment()).recipients.Traverse();
+					        	Send("Recipients:");
+					        	for (int i=0; i<to.length; i++)
+					        		Send(to[i]);
+					        	End();
+					        	break;
+					        	
+					        }
+					        	
+								
+								
+							if(checkStr == true && line.equals("/help")){
+								Send("/get");
+								Send("/filelist");
+								Send("/listfriend");
 								break;
+							
 							}
+								
+								
+								
 								
 							if(checkStr == true && line.equals("/get")){
                             
@@ -301,6 +503,14 @@ public class SelectServer {
 								for (int i=0; i<loggedin.length; i++)
 									Send(loggedin[i]);
 								End(); break;
+							}
+							
+							if (checkStr == true && line.equals("/clear"))
+							{
+								((User) key.attachment()).log=new LinkedList();
+								util.delete(((User) key.attachment()).auth.whoami()+".log");
+								End();
+								break;
 							}
 							
 							if (checkStr == true && line.equals("/logout"))
@@ -348,11 +558,116 @@ public class SelectServer {
 										break;
 										
 
-											}
+								}
+								
+									
+							if(checkStr == true && line.equals("/viewFriends")){
+								
+										System.out.println("Your FriendList:");
+										Send("----Your FriendList:-----");
+										String username = (((User) key.attachment()).auth.whoami());
+										String readfriend_db = username + ".db";
+										
+										
+										//System.out.println("Reading userfile name");
+										
+										System.out.println(readfriend_db);
+										
+										FileReader friendfile=new FileReader(readfriend_db);
+										BufferedReader b_2 =new BufferedReader(friendfile);
+										
+										
+										String friendLine;
+										while((friendLine = b_2.readLine()) != null)
+										{
+											Send(friendLine);
+										
+										}
+										b_2.close();
+										
+								
+										
+									End();
+									break;
+									
+									
+							
+								}
+								
+								
+								
+								
+							boolean checkDel = line.contains("/delFriends");
+								
+							if(checkStr == true && checkDel == true){
+								
+								
+								
+									String delusername = line.substring(12); //remove "/delFriends"
+
+										delusername = delusername.trim(); //remove nextline from substring
+										
+								
+										String requestUsername = (((User) key.attachment()).auth.whoami());
+										String readfriend_db = requestUsername + ".db";
+										
+										
+										removeLineFromFile(readfriend_db, delusername);
+								
+										
+										End();
+										break;
+
+							}
+								
+								
+							boolean checkAdd = line.contains("/addFriends");
+								
+							if(checkStr == true && checkAdd == true){
+								
+									String addusername = line.substring(12); //remove "/delFriends"
+
+									addusername = addusername.trim(); //remove nextline from substring
+									
+									//CHECK CONDITION REQUIRED IF USER EXSISTS OR NOT
+										
+								
+									String requestUsername = (((User) key.attachment()).auth.whoami());
+									String readfriend_db = requestUsername + ".db";
+									
+									duplicateCheckForAdd(readfriend_db, addusername);
+									
+									End();
+									break;
+									}
+									
+								
+							
+							
+							
+							
+							
+							
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
+								
 						
 						
 						
-									/*if (checkStr == true){
+									if (checkStr == true){
 										Send(UNKNOWN+line); 
 										End();
 									}
@@ -361,7 +676,7 @@ public class SelectServer {
 				
 									Send(line);
 									End();
-								}*/
+								}
 								
 							
 							}//end of else case
